@@ -1,0 +1,327 @@
+/* ===== Checkout Container ===== */
+.checkout-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  padding: 40px 20px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.checkout-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 10% 20%, rgba(201, 162, 77, 0.1) 0%, transparent 20%),
+    radial-gradient(circle at 90% 80%, rgba(201, 162, 77, 0.1) 0%, transparent 20%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ===== Header ===== */
+.checkout-header {
+  text-align: center;
+  margin-bottom: 50px;
+  position: relative;
+  z-index: 1;
+}
+
+.checkout-header h1 {
+  color: white;
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #c9a24d, #e0c07f);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 5px 15px rgba(201, 162, 77, 0.2);
+  animation: titleGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes titleGlow {
+  from {
+    text-shadow: 0 5px 15px rgba(201, 162, 77, 0.2);
+  }
+  to {
+    text-shadow: 0 5px 25px rgba(201, 162, 77, 0.4);
+  }
+}
+
+.security-badges {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.security-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.95rem;
+  padding: 12px 25px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.security-badge:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(201, 162, 77, 0.3);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.security-badge svg {
+  color: #c9a24d;
+  font-size: 1.2rem;
+}
+
+/* ===== Checkout Content ===== */
+.checkout-content {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 1024px) {
+  .checkout-content {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+}
+
+/* ===== Loading State ===== */
+.checkout-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  color: white;
+}
+
+.loading-spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #c9a24d;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+.checkout-loading p {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.1rem;
+}
+
+/* ===== Empty Cart ===== */
+.empty-cart {
+  text-align: center;
+  padding: 80px 20px;
+  color: white;
+}
+
+.empty-cart-icon {
+  font-size: 5rem;
+  margin-bottom: 20px;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+.empty-cart h2 {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.empty-cart p {
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 30px;
+}
+
+.back-to-shop {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 35px;
+  background: linear-gradient(135deg, #c9a24d, #d4b15e);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.back-to-shop:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px rgba(201, 162, 77, 0.3);
+}
+
+/* ===== Processing Overlay ===== */
+.processing-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.processing-modal {
+  text-align: center;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
+  padding: 50px;
+  border-radius: 25px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 30px 60px rgba(0, 0, 0, 0.4),
+    0 0 80px rgba(201, 162, 77, 0.2);
+  max-width: 500px;
+  width: 90%;
+}
+
+.spinner-container {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 30px;
+}
+
+.payment-spinner {
+  width: 100%;
+  height: 100%;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #c9a24d;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.spinner-ring {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  border: 2px solid rgba(201, 162, 77, 0.2);
+  border-radius: 50%;
+  animation: spinReverse 2s linear infinite;
+}
+
+@keyframes spinReverse {
+  to { transform: rotate(-360deg); }
+}
+
+.processing-modal h3 {
+  color: white;
+  font-size: 1.8rem;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.processing-modal p {
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 30px;
+  line-height: 1.6;
+}
+
+.processing-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.processing-dots span {
+  width: 10px;
+  height: 10px;
+  background: #c9a24d;
+  border-radius: 50%;
+  animation: dotsPulse 1.5s infinite ease-in-out;
+}
+
+.processing-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.processing-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes dotsPulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.2); opacity: 1; }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .checkout-header h1 {
+    font-size: 2.2rem;
+  }
+
+  .security-badges {
+    gap: 15px;
+  }
+
+  .security-badge {
+    font-size: 0.85rem;
+    padding: 10px 20px;
+  }
+
+  .processing-modal {
+    padding: 30px 20px;
+  }
+}
+
+/* ===== Floating Elements ===== */
+.floating-element {
+  position: absolute;
+  z-index: 0;
+  opacity: 0.1;
+}
+
+.floating-1 {
+  top: 10%;
+  left: 5%;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, #c9a24d, transparent);
+  border-radius: 50%;
+  animation: float 20s infinite ease-in-out;
+}
+
+.floating-2 {
+  bottom: 20%;
+  right: 10%;
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle, rgba(201, 162, 77, 0.3), transparent);
+  border-radius: 50%;
+  animation: float 25s infinite ease-in-out reverse;
+}
