@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import ProductCard from '@/components/ProductCard'
@@ -25,7 +25,7 @@ interface Category {
   count?: number
 }
 
-export default function ProductsPage() {
+function ProductsPageClient() {
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
@@ -354,5 +354,13 @@ export default function ProductsPage() {
         </main>
       </div>
     </div>
+  )
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={<div className="products-page" />}>
+      <ProductsPageClient />
+    </Suspense>
   )
 }

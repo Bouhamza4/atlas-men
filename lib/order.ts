@@ -20,8 +20,8 @@ export interface Order {
   billing_address?: Record<string, any> | null
   payment_method: string
   payment_status: 'pending' | 'paid' | 'failed' | 'refunded'
-  stripe_payment_intent_id?: string
-  stripe_session_id?: string
+  stripe_payment_intent_id?: string | null
+  stripe_session_id?: string | null
   created_at: string
   updated_at: string
   items: OrderItem[]

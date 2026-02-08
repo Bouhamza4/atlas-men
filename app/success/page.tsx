@@ -1,12 +1,12 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getOrder } from '@/lib/order'
 import { FiCheckCircle, FiPackage, FiTruck, FiHome, FiDownload, FiShare2 } from 'react-icons/fi'
 import './success.css'
 
-export default function SuccessPage() {
+function SuccessPageClient() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [loading, setLoading] = useState(true)
@@ -317,5 +317,13 @@ export default function SuccessPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SuccessPage() {
+  return (
+    <Suspense fallback={<div className="success-page" />}>
+      <SuccessPageClient />
+    </Suspense>
   )
 }

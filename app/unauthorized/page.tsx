@@ -31,13 +31,13 @@ export default function UnauthorizedPage() {
               Go to Homepage
             </Link>
             
-            <button
-              onClick={() => window.history.back()}
+            <Link
+              href="/"
               className="inline-flex items-center justify-center w-full px-6 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-medium rounded-lg transition-colors"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
               Go Back
-            </button>
+            </Link>
           </div>
 
           <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
