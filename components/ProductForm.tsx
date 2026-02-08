@@ -74,7 +74,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
         name: formData.name,
         price: Number(formData.price),
         description: formData.description,
-        category_id: Number(formData.category_id),
+        category_id: formData.category_id || null,
         stock: Number(formData.stock),
         image_url: formData.image_url
       }

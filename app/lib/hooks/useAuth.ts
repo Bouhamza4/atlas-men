@@ -2,10 +2,25 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { supabase, getProfile } from '@/lib/supabase';
-import { User, Session } from '@supabase/supabase-js';
-import {Profile }from '@/types/profile';
+import { supabase } from '@/lib/supabaseClient';
+import type { User, Session } from '@supabase/supabase-js';
 
+// Profile type definition
+type Profile = {
+  id: string;
+  email: string | null;
+  role: 'user' | 'admin' | 'moderator';
+  full_name: string | null;
+  avatar_url: string | null;
+  phone: string | null;
+  address: string | null;
+  city: string | null;
+  country: string | null;
+  bio: string | null;
+  last_login: string | null;
+  created_at: string;
+  updated_at: string;
+};
 
 type AuthState = {
   user: User | null;
@@ -50,15 +65,30 @@ export function useAuth() {
 
       let profile = null;
       if (user) {
-        profile = await getProfile(user.id);
-      }
-
-      // Update last login
-      if (user && profile) {
-        await supabase
+        // Fetch profile
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .update({ last_login: new Date().toISOString() })
-          .eq('id', user.id);
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError && profileError.code !== 'PGRST116') {
+          console.warn('Profile fetch error:', profileError);
+        }
+
+        profile = profileData as Profile | null;
+
+        // ✅ FIX: Update last_login with proper TypeScript handling
+        if (user && profile) {
+          try {
+            await supabase
+              .from('profiles')
+              .update({ last_login: new Date().toISOString() })
+              .eq('id', user.id);
+          } catch (updateError) {
+            console.warn('Failed to update last_login:', updateError);
+          }
+        }
       }
 
       setState({
@@ -91,7 +121,7 @@ export function useAuth() {
           
           // Redirect after sign in
           if (event === 'SIGNED_IN' && pathname.startsWith('/auth')) {
-            router.push('/dashboard');
+            router.push('/admin');
           }
         } else if (event === 'SIGNED_OUT') {
           setState({
@@ -139,23 +169,27 @@ export function useAuth() {
 
       setState(prev => ({
         ...prev,
-        profile: data,
+        profile: data as Profile,
       }));
 
-      return data;
+      return data as Profile;
     } catch (error) {
       console.error('Update profile error:', error);
       throw error;
     }
   }, [state.user]);
 
+  const isAuthenticated = !!state.user;
+  const isAdmin = state.profile?.role === 'admin';
+  const isModerator = state.profile?.role === 'moderator' || state.profile?.role === 'admin';
+
   return {
     ...state,
     refreshUser,
     signOut,
     updateProfile,
-    isAuthenticated: !!state.user,
-    isAdmin: state.profile?.role === 'admin',
-    isModerator: state.profile?.role === 'moderator' || state.profile?.role === 'admin',
+    isAuthenticated,
+    isAdmin,
+    isModerator,
   };
 }

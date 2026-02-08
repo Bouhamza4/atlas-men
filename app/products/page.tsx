@@ -8,18 +8,18 @@ import { TbLoader } from 'react-icons/tb'
 import './products.css'
 
 interface Product {
-  id: number
+  id: string
   name: string
   price: number
-  image_url: string
-  category_id: number
+  image_url: string | null
+  category_id: string | null
   category_name?: string
   is_new?: boolean
   discount?: number
 }
 
 interface Category {
-  id: number
+  id: string
   name: string
   slug: string
   count?: number
@@ -133,8 +133,8 @@ export default function ProductsPage() {
       case 'name':
         result.sort((a, b) => a.name.localeCompare(b.name))
         break
-      default: // newest
-        result.sort((a, b) => b.id - a.id)
+      default: // newest (stable sort by id)
+        result.sort((a, b) => String(b.id).localeCompare(String(a.id)))
     }
 
     setFilteredProducts(result)

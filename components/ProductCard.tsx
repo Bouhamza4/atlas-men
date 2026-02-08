@@ -5,11 +5,12 @@ import { FiEye, FiHeart, FiShoppingCart } from 'react-icons/fi'
 import './ProductCard.css'
 
 interface Product {
-  id: number
+  id: string
   name: string
   price: number
-  image_url: string
+  image_url: string | null
   category?: string
+  category_name?: string
   is_new?: boolean
   discount?: number
 }
@@ -56,7 +57,7 @@ export default function ProductCard({ product }: { product: Product }) {
       {/* Product Image Container */}
       <div className="product-image-container">
         <img 
-          src={product.image_url} 
+          src={product.image_url ?? ''} 
           alt={product.name}
           className="product-image"
           loading="lazy"

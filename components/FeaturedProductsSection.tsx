@@ -4,11 +4,13 @@ import { supabase } from '@/lib/supabase'
 import './FeaturedProductsSection.css'
 
 interface Product {
-  id: number
+  id: string
   name: string
   price: number
-  image_url: string
-  category?: string
+  image_url: string | null
+  description?: string | null
+  stock?: number
+  category_id?: string | null
 }
 
 export default function FeaturedProductsSection() {
@@ -24,7 +26,7 @@ export default function FeaturedProductsSection() {
       })
   }, [])
 
-  const handleQuickView = (productId: number) => {
+  const handleQuickView = (productId: string) => {
     // Implement quick view functionality
     console.log('Quick view:', productId)
   }
@@ -41,7 +43,7 @@ export default function FeaturedProductsSection() {
           >
             <div className="product-badge">Featured</div>
             <div className="product-image-container">
-              <img src={prod.image_url} alt={prod.name} />
+              <img src={prod.image_url ?? ''} alt={prod.name} />
               <div className="product-overlay">
                 <button 
                   className="quick-view-btn"

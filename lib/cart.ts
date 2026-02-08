@@ -19,8 +19,7 @@ export interface CartItem {
 export interface Cart {
   id: string
   user_id: string
-  created_at: string
-  updated_at: string
+  created_at: string | null
   items: CartItem[]
   total: number
   item_count: number
@@ -46,6 +45,7 @@ export async function getCart(userId: string): Promise<Cart | null> {
       if (createError) throw createError
       return {
         ...newCart,
+        created_at: (newCart as any)?.created_at ?? null,
         items: [],
         total: 0,
         item_count: 0
@@ -107,12 +107,14 @@ export async function getCart(userId: string): Promise<Cart | null> {
     const total = formattedItems.reduce((sum, item) => 
       sum + (item.product.price * item.quantity), 0
     )
+    const item_count = formattedItems.reduce((sum, item) => sum + item.quantity, 0)
 
     return {
       ...cart,
       items: formattedItems,
       total,
-      item_count: formattedItems.reduce((sum, item) => sum + item.quantity, 0)
+      item_count,
+      created_at: (cart as any)?.created_at ?? null
     }
   } catch (error) {
     console.error('Get cart error:', error)

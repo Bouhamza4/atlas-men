@@ -1,8 +1,8 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { useAuth } from '../hooks/useAuth';
-import { Shield, Lock } from 'lucide-react';
+import { useAuth } from '@/app/lib/hooks/useAuth';
+import { FiShield, FiLock } from 'react-icons/fi';
 
 interface AdminOnlyProps {
   children: ReactNode;
@@ -28,7 +28,7 @@ export default function AdminOnly({
 
     return (
       <div className="admin-only-fallback">
-        {showLock && <Lock className="lock-icon" />}
+        {showLock && <FiLock className="lock-icon" />}
         <div className="admin-only-content">
           <h3>Admin Access Required</h3>
           <p>This content is only visible to administrators.</p>
@@ -38,12 +38,12 @@ export default function AdminOnly({
   }
 
   return (
-    <>
+    <div className="admin-wrapper">
       <div className="admin-badge">
-        <Shield size={14} />
+        <FiShield className="admin-icon" />
         <span>Admin View</span>
       </div>
       {children}
-    </>
+    </div>
   );
 }

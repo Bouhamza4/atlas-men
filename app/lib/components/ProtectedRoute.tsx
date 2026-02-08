@@ -2,8 +2,8 @@
 
 import { ReactNode, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../hooks/useAuth';
-import { Loader2, ShieldAlert } from 'lucide-react';
+import { useAuth } from '@/app/lib/hooks/useAuth';
+import { FiAlertTriangle, FiLoader } from 'react-icons/fi';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -59,11 +59,11 @@ export default function ProtectedRoute({
 
   if (loading && showLoader) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-          <p className="mt-4 text-lg font-medium">Checking authentication...</p>
-          <p className="text-sm text-muted-foreground mt-2">
+      <div className="loading-container">
+        <div className="loading-content">
+          <FiLoader className="spinner-icon" />
+          <p className="loading-text">Checking authentication...</p>
+          <p className="loading-subtext">
             Please wait while we verify your access
           </p>
         </div>
@@ -83,16 +83,16 @@ export default function ProtectedRoute({
     }
 
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center max-w-md p-8">
-          <ShieldAlert className="h-16 w-16 text-destructive mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
-          <p className="text-muted-foreground mb-6">
+      <div className="access-denied-container">
+        <div className="access-denied-content">
+          <FiAlertTriangle className="denied-icon" />
+          <h1 className="denied-title">Access Denied</h1>
+          <p className="denied-description">
             You don't have permission to access this page. Please contact an administrator if you believe this is an error.
           </p>
           <button
             onClick={() => router.push('/')}
-            className="px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+            className="denied-button"
           >
             Go to Homepage
           </button>
@@ -101,6 +101,5 @@ export default function ProtectedRoute({
     );
   }
 
-  // Render children with auth data
   return <>{children}</>;
 }

@@ -5,10 +5,11 @@ import { supabase } from '@/lib/supabase'
 import './CategoriesSection.css'
 
 interface Category {
-  id: number
+  id: string
   name: string
   slug: string
-  image_url: string
+  image_url?: string | null
+  created_at?: string | null
 }
 
 export default function CategoriesSection() {
@@ -31,7 +32,7 @@ export default function CategoriesSection() {
             className="category-card"
             style={{ animationDelay: `${index * 0.1 + 0.1}s` }}
           >
-            <img src={cat.image_url} alt={cat.name} />
+            {cat.image_url && <img src={cat.image_url} alt={cat.name} />}
             <h3>{cat.name}</h3>
             <div className="overlay">
               <span>View Collection</span>

@@ -1,12 +1,14 @@
-import { Inter } from 'next/font/google';
+
 import { AuthProvider } from '@/app/lib/providers/AuthProvider';
-import './globals.css';
+
 import Header from '@/components/Header';
 
-const inter = Inter({ subsets: ['latin'] });
 
-export const metadata = {
-  title: 'ATLAS GENTLEMAN - Admin Dashboard',
+import type { Metadata } from 'next';
+import './globals.css';
+
+export const metadata: Metadata = {
+  title: 'ATLAS GENTLEMAN - Professional Dashboard',
   description: 'Professional e-commerce admin dashboard',
 };
 
@@ -16,9 +18,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <Header />
+    <html lang="en">
+      <body style={{
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif",
+        margin: 0,
+        padding: 0,
+        boxSizing: 'border-box'
+      }}>
+       <Header />
         <AuthProvider>
           {children}
         </AuthProvider>

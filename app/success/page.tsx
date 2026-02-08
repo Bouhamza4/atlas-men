@@ -27,6 +27,12 @@ export default function SuccessPage() {
 
   const fetchOrder = async () => {
     try {
+      const currentSessionId = sessionId
+      if (!currentSessionId) {
+        router.push('/')
+        return
+      }
+
       // Get current user
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
@@ -38,7 +44,7 @@ export default function SuccessPage() {
       const { data: orders } = await supabase
         .from('orders')
         .select('id')
-        .eq('stripe_session_id', sessionId)
+        .eq('stripe_session_id', currentSessionId)
         .eq('user_id', user.id)
         .limit(1)
 

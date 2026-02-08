@@ -6,15 +6,15 @@ import { TbLoader } from 'react-icons/tb'
 import './AdminDashboard.css'
 
 interface Product {
-  id: number
+  id: string
   name: string
   price: number
-  image_url: string
-  description: string
-  category_id: number
+  image_url: string | null
+  description: string | null
+  category_id: string | null
   category_name?: string
   stock: number
-  created_at: string
+  created_at?: string | null
 }
 
 export default function AdminDashboard() {
@@ -29,7 +29,7 @@ export default function AdminDashboard() {
     outOfStock: 0,
     categoriesCount: 0
   })
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
 
   const fetchProducts = async () => {
     setLoading(true)
@@ -80,7 +80,7 @@ export default function AdminDashboard() {
     fetchCategories()
   }, [])
 
-  const deleteProduct = async (id: number) => {
+  const deleteProduct = async (id: string) => {
     try {
       await supabase.from('products').delete().eq('id', id)
       fetchProducts()
@@ -92,7 +92,7 @@ export default function AdminDashboard() {
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.description.toLowerCase().includes(searchTerm.toLowerCase())
+                         (product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
     const matchesCategory = selectedCategory === 'all' || 
                           product.category_name === selectedCategory
     
@@ -108,7 +108,7 @@ export default function AdminDashboard() {
         p.price,
         p.stock,
         p.category_name,
-        new Date(p.created_at).toLocaleDateString()
+        p.created_at ? new Date(p.created_at).toLocaleDateString() : 'N/A'
       ])
     ].map(row => row.join(',')).join('\n')
 
@@ -246,14 +246,14 @@ export default function AdminDashboard() {
                     <tr key={product.id} className={product.stock === 0 ? 'out-of-stock' : ''}>
                       <td className="image-col">
                         <div className="product-image">
-                          <img src={product.image_url} alt={product.name} loading="lazy" />
+                          <img src={product.image_url ?? ''} alt={product.name} loading="lazy" />
                         </div>
                       </td>
                       
                       <td className="name-col">
                         <div className="product-info">
                           <strong className="product-name">{product.name}</strong>
-                          <p className="product-desc">{product.description.substring(0, 60)}...</p>
+                          <p className="product-desc">{product.description ? `${product.description.substring(0, 60)}...` : '—'}</p>
                         </div>
                       </td>
                       
@@ -275,7 +275,7 @@ export default function AdminDashboard() {
                       </td>
                       
                       <td className="date-col">
-                        {new Date(product.created_at).toLocaleDateString()}
+                        {product.created_at ? new Date(product.created_at).toLocaleDateString() : 'N/A'}
                       </td>
                       
                       <td className="actions-col">

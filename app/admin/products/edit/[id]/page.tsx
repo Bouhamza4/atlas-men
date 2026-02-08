@@ -18,10 +18,16 @@ export default function EditProductPage() {
 
   const fetchProduct = async () => {
     try {
+      const productId = Array.isArray(id) ? id[0] : id
+      if (!productId) {
+        setLoading(false)
+        return
+      }
+
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .eq('id', id)
+        .eq('id', productId)
         .single()
 
       if (error) throw error

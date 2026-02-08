@@ -16,6 +16,9 @@ export default function ProductDetailPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    const productId = typeof id === 'string' ? id : undefined
+    if (!productId) return
+
     const fetchProduct = async () => {
       try {
         setLoading(true)
@@ -30,7 +33,7 @@ export default function ProductDetailPage() {
               slug
             )
           `)
-          .eq('id', id)
+          .eq('id', productId)
           .single()
 
         if (productError) throw productError
@@ -39,11 +42,12 @@ export default function ProductDetailPage() {
           setProduct(productData)
           
           // Fetch related products from same category
+          const categoryId = productData.category_id ?? ''
           const { data: relatedData } = await supabase
             .from('products')
             .select('*')
-            .eq('category_id', productData.category_id)
-            .neq('id', id)
+            .eq('category_id', categoryId)
+            .neq('id', productId)
             .limit(4)
 
           setRelatedProducts(relatedData || [])

@@ -16,26 +16,8 @@ export interface Order {
   subtotal: number
   shipping_cost: number
   tax_amount: number
-  shipping_address: {
-    full_name: string
-    address_line1: string
-    address_line2?: string
-    city: string
-    state: string
-    postal_code: string
-    country: string
-    phone: string
-  }
-  billing_address?: {
-    same_as_shipping: boolean
-    full_name?: string
-    address_line1?: string
-    address_line2?: string
-    city?: string
-    state?: string
-    postal_code?: string
-    country?: string
-  }
+  shipping_address: Record<string, any>
+  billing_address?: Record<string, any> | null
   payment_method: string
   payment_status: 'pending' | 'paid' | 'failed' | 'refunded'
   stripe_payment_intent_id?: string
@@ -52,7 +34,7 @@ export async function createOrderFromCart(
 ): Promise<Order | null> {
   try {
     // Get user's cart with validation
-    const cart = await supabase
+    const cart: any = await supabase
       .from('carts')
       .select(`
         id,
@@ -79,22 +61,24 @@ export async function createOrderFromCart(
     const items: OrderItem[] = []
     let subtotal = 0
 
-    for (const item of cart.data.cart_items) {
+    const cartItems: any[] = (cart.data as any).cart_items ?? []
+    for (const item of cartItems) {
       // Supabase nested relations are returned as arrays; normalize to single product object
-      const prod = Array.isArray(item.products) ? item.products[0] : item.products
+      const prod = Array.isArray((item as any).products) ? (item as any).products[0] : (item as any).products
+      const quantity = Number((item as any).quantity ?? 0)
 
       // Check stock
-      if (!prod || prod.stock < item.quantity) {
+      if (!prod || prod.stock < quantity) {
         const prodName = prod?.name ?? 'unknown product'
         throw new Error(`Insufficient stock for ${prodName}`)
       }
 
-      const itemTotal = prod.price * item.quantity
+      const itemTotal = prod.price * quantity
       subtotal += itemTotal
 
       items.push({
         product_id: prod.id,
-        quantity: item.quantity,
+        quantity,
         price: prod.price,
         name: prod.name,
         image_url: prod.image_url
@@ -143,7 +127,7 @@ export async function createOrderFromCart(
 
     // Update product stock (reserve items)
     for (const item of items) {
-      await supabase.rpc('decrement_product_stock', {
+      await (supabase as any).rpc('decrement_product_stock', {
         product_id: item.product_id,
         amount: item.quantity
       })

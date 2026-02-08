@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { createClient } from '@/app/lib/utils/auth';
 import { cookies } from 'next/headers';
 
+
 // Public routes that don't require authentication
 const publicRoutes = [
   '/',
@@ -101,6 +102,26 @@ export async function middleware(request: NextRequest) {
     response.headers.set('x-user-email', user.email || '');
   }
 
+  return response;
+}
+
+// middleware.ts → proxy.ts
+
+
+export default function proxy(request: NextRequest) {
+  // إضافة headers للأمان
+  const response = NextResponse.next();
+  
+  // CORS headers
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  // Security headers
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-XSS-Protection', '1; mode=block');
+  
   return response;
 }
 

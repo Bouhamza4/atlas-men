@@ -1,8 +1,6 @@
-export type Role = 'user' | 'admin' | 'moderator';
+import type { Database } from './supabase';
 
-export type Profile = {
-  id: string;
-  email: string;
-  role: Role;
-  created_at: string;
-};
+// ✅ Types من Supabase generator
+export type Profile = Database['public']['Tables']['profiles']['Row'];
+export type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
+export type ProfileInsert = Database['public']['Tables']['profiles']['Insert'];
