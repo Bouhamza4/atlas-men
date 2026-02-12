@@ -19,6 +19,15 @@ export default function ProductDetailPage() {
     const productId = typeof id === 'string' ? id : undefined
     if (!productId) return
 
+    let isActive = true
+    const isAbortError = (error: unknown) => {
+      if (error instanceof DOMException && error.name === 'AbortError') return true
+      if (error instanceof Error) {
+        return error.name === 'AbortError' || error.message.includes('signal is aborted')
+      }
+      return false
+    }
+
     const fetchProduct = async () => {
       try {
         setLoading(true)
@@ -38,7 +47,7 @@ export default function ProductDetailPage() {
 
         if (productError) throw productError
 
-        if (productData) {
+        if (productData && isActive) {
           setProduct(productData)
           
           // Fetch related products from same category
@@ -50,17 +59,24 @@ export default function ProductDetailPage() {
             .neq('id', productId)
             .limit(4)
 
-          setRelatedProducts(relatedData || [])
+          if (isActive) {
+            setRelatedProducts(relatedData || [])
+          }
         }
       } catch (err) {
-        setError('Failed to load product')
-        console.error(err)
+        if (!isAbortError(err)) {
+          if (isActive) setError('Failed to load product')
+          console.error(err)
+        }
       } finally {
-        setLoading(false)
+        if (isActive) setLoading(false)
       }
     }
 
-    fetchProduct()
+    void fetchProduct()
+    return () => {
+      isActive = false
+    }
   }, [id])
 
   if (loading) {

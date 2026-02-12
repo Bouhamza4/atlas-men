@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import Link from 'next/link'
 import { useState, useEffect, useRef } from 'react'
@@ -14,7 +14,27 @@ export default function Header() {
   const [isMobile, setIsMobile] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [allowTransitions, setAllowTransitions] = useState(false)
+  const [cartCount, setCartCount] = useState(3)
+  const [wishlistCount, setWishlistCount] = useState(2)
   const profileRef = useRef<HTMLDivElement>(null)
+  const headerRef = useRef<HTMLDivElement>(null)
+
+  // السماح بالانتقالات بعد التحميل الكامل
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setAllowTransitions(true)
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [])
+
+  // حفظ حالة القائمة في localStorage
+  useEffect(() => {
+    localStorage.setItem('menuState', JSON.stringify({
+      isMenuOpen,
+      scrolled
+    }))
+  }, [isMenuOpen, scrolled])
 
   // Check session on mount
   useEffect(() => {
@@ -79,11 +99,20 @@ export default function Header() {
     { label: 'Sale', href: '/products?filter=sale', highlight: true },
     { label: 'Collections', href: '/collections' },
   ]
+  // components/Header.tsx - أضف هذا الـ useEffect
+const [allowAnimations, setAllowAnimations] = useState(false)
 
-  const cartItemsCount = 3 // This should come from your cart state
+// السماح بالـ Animations بعد التحميل الكامل
+useEffect(() => {
+  const timer = setTimeout(() => {
+    setAllowAnimations(true)
+  }, 100)
+  return () => clearTimeout(timer)
+}, [])
+
 
   return (
-    <>
+    <div ref={headerRef} className="stable-css">
       {/* Top Bar */}
       <div className="top-bar">
         <div className="container">
@@ -97,7 +126,7 @@ export default function Header() {
       </div>
 
       {/* Main Header */}
-      <header className={`main-header ${scrolled ? 'scrolled' : ''} ${isMenuOpen ? 'menu-open' : ''}`}>
+      <header className={`main-header ${scrolled ? 'scrolled' : ''} ${isMenuOpen ? 'menu-open' : ''} ${allowTransitions ? 'allow-transitions' : ''}`}>
         <div className="header-container">
           {/* Logo */}
           <div className="logo-container">
@@ -165,14 +194,16 @@ export default function Header() {
             {/* Wishlist */}
             <Link href="/wishlist" className="action-btn" title="Wishlist">
               <FiHeart />
-              <span className="action-badge">2</span>
+              {wishlistCount > 0 && (
+                <span className="action-badge">{wishlistCount}</span>
+              )}
             </Link>
 
             {/* Cart */}
             <Link href="/cart" className="action-btn cart-btn" title="Cart">
               <FiShoppingCart />
-              {cartItemsCount > 0 && (
-                <span className="action-badge">{cartItemsCount}</span>
+              {cartCount > 0 && (
+                <span className="action-badge">{cartCount}</span>
               )}
             </Link>
 
@@ -269,6 +300,6 @@ export default function Header() {
           </div>
         </div>
       </header>
-    </>
+    </div>
   )
 }

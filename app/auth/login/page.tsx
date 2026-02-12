@@ -85,18 +85,33 @@ export default function LoginPage() {
     setSuccess(null);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
       });
 
-      if (error) throw error;
+      // Log full response for debugging
+      console.debug('Supabase signIn response:', { data, authError });
 
-      // Update last_login
-      await supabase
-        .from('profiles')
-        .update({ last_login: new Date().toISOString() })
-        .eq('id', data.user.id);
+      // Normalize error handling: show specific message if available, otherwise fallback
+      if (authError || !data?.user) {
+        const msg =
+          authError?.message ||
+          (authError?.status === 400 ? 'Invalid login credentials. Please check your credentials and try again' : 'Invalid email or password');
+        console.warn('Supabase auth error (normalized):', msg, authError);
+        setError(msg);
+        setLoading(false);
+        return;
+      }
+
+      // Update last_login only if we have a user id
+      const userId = data?.user?.id;
+      if (userId) {
+        await supabase
+          .from('profiles')
+          .update({ last_login: new Date().toISOString() })
+          .eq('id', userId);
+      }
 
       // Remember Me functionality
       if (formData.rememberMe) {
@@ -114,8 +129,8 @@ export default function LoginPage() {
       }, 1500);
 
     } catch (err: any) {
-      console.error('Login error:', err);
-      setError(err.message || 'Invalid email or password');
+      console.error('Unexpected login error:', err);
+      setError(err?.message || 'An unexpected error occurred during login');
     } finally {
       setLoading(false);
     }
@@ -128,15 +143,22 @@ export default function LoginPage() {
     }
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
+      const { data, error } = await supabase.auth.resetPasswordForEmail(formData.email, {
         redirectTo: `${window.location.origin}/auth/reset-password`
       });
 
-      if (error) throw error;
+      console.debug('Supabase resetPasswordForEmail response:', { data, error });
+
+      if (error) {
+        console.warn('Reset password error:', error);
+        setError(error.message || 'Failed to send reset email');
+        return;
+      }
       
       setSuccess(`📧 Password reset email sent to ${formData.email}`);
     } catch (err: any) {
-      setError(err.message || 'Failed to send reset email');
+      console.error('Reset password unexpected error:', err);
+      setError(err?.message || 'Failed to send reset email');
     }
   };
 

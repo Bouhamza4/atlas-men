@@ -1,15 +1,19 @@
 
 import { AuthProvider } from '@/app/lib/providers/AuthProvider';
 
-import Header from '@/components/Header';
 
 
+// app/layout.tsx
 import type { Metadata } from 'next';
 import './globals.css';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import { CartProvider } from '@/components/CartContext';
 
 export const metadata: Metadata = {
-  title: 'ATLAS GENTLEMAN - Professional Dashboard',
-  description: 'Professional e-commerce admin dashboard',
+  title: 'Atlas Store - Modern Fashion & Quality Products',
+  description: 'Discover the latest trends in fashion with Atlas Store',
+  keywords: 'fashion, store, ecommerce, modern, clothing',
 };
 
 export default function RootLayout({
@@ -19,16 +23,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body style={{
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif",
-        margin: 0,
-        padding: 0,
-        boxSizing: 'border-box'
-      }}>
-       <Header />
-        <AuthProvider>
+      <head>
+        <link rel="icon" href="/favicon.ico" />
+      </head>
+      <body>
+        <CartProvider>
+          <Header />
+          <main className="main-content">
+          <AuthProvider>
           {children}
         </AuthProvider>
+          </main>
+
+          <Footer />
+        </CartProvider>
       </body>
     </html>
   );

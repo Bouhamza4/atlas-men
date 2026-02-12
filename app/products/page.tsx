@@ -41,52 +41,77 @@ function ProductsPageClient() {
   const categorySlug = searchParams.get('category')
 
   useEffect(() => {
+    let isActive = true
+
+    const isAbortError = (error: unknown) => {
+      if (error instanceof DOMException && error.name === 'AbortError') return true
+      if (error instanceof Error) {
+        return error.name === 'AbortError' || error.message.includes('signal is aborted')
+      }
+      return false
+    }
+
     const fetchData = async () => {
       setLoading(true)
-      
-      // Fetch products with category names
-      const { data: productsData, error: productsError } = await supabase
-        .from('products')
-        .select(`
+
+      try {
+        // Fetch products with category names
+        const { data: productsData, error: productsError } = await supabase
+          .from('products')
+          .select(`
           *,
           categories!inner (
             name,
             slug
           )
         `)
-        .order('created_at', { ascending: false })
+          .order('created_at', { ascending: false })
 
-      // Fetch categories with product counts
-      const { data: categoriesData, error: categoriesError } = await supabase
-        .from('categories')
-        .select(`
+        if (productsError) throw productsError
+
+        // Fetch categories with product counts
+        const { data: categoriesData, error: categoriesError } = await supabase
+          .from('categories')
+          .select(`
           *,
           products (id)
         `)
 
-      if (productsData) {
-        const formattedProducts = productsData.map(product => ({
-          ...product,
-          category_name: product.categories?.name,
-          is_new: Math.random() > 0.7,
-          discount: Math.random() > 0.8 ? Math.floor(Math.random() * 40) + 10 : undefined
-        }))
-        setProducts(formattedProducts)
-        setFilteredProducts(formattedProducts)
-      }
+        if (categoriesError) throw categoriesError
 
-      if (categoriesData) {
-        const formattedCategories = categoriesData.map(category => ({
-          ...category,
-          count: category.products?.length || 0
-        }))
-        setCategories(formattedCategories)
-      }
+        if (!isActive) return
 
-      setLoading(false)
+        if (productsData) {
+          const formattedProducts = productsData.map(product => ({
+            ...product,
+            category_name: product.categories?.name,
+            is_new: Math.random() > 0.7,
+            discount: Math.random() > 0.8 ? Math.floor(Math.random() * 40) + 10 : undefined
+          }))
+          setProducts(formattedProducts)
+          setFilteredProducts(formattedProducts)
+        }
+
+        if (categoriesData) {
+          const formattedCategories = categoriesData.map(category => ({
+            ...category,
+            count: category.products?.length || 0
+          }))
+          setCategories(formattedCategories)
+        }
+      } catch (error) {
+        if (!isAbortError(error)) {
+          console.error('Failed to fetch products page data:', error)
+        }
+      } finally {
+        if (isActive) setLoading(false)
+      }
     }
 
-    fetchData()
+    void fetchData()
+    return () => {
+      isActive = false
+    }
   }, [])
 
   // Filter by URL category param
