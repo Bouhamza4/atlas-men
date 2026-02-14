@@ -11,16 +11,17 @@ type Product = {
   id: string
   name: string
   price: number
-  image_url: string
-  category_id: number
-  description?: string
+  image_url?: string | null
+  category_id?: string | null
+  description?: string | null
   rating?: number
   discount?: number
-  created_at: string
+  stock?: number
+  created_at?: string | null
 }
 
 type Category = {
-  id: number
+  id: string
   name: string
   description?: string
 }
@@ -33,10 +34,11 @@ export default function CategoryPage() {
   const [loading, setLoading] = useState(true)
   const [sortBy, setSortBy] = useState<'newest' | 'price-low' | 'price-high'>('newest')
 
-  const categoryId = params.categoryId
+  const rawCategoryId = params.categoryId
+  const categoryId = Array.isArray(rawCategoryId) ? rawCategoryId[0] : rawCategoryId
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchData = async (id: string) => {
       setLoading(true)
       
       try {
@@ -44,7 +46,7 @@ export default function CategoryPage() {
         const { data: categoryData } = await supabase
           .from('categories')
           .select('*')
-          .eq('id', categoryId)
+          .eq('id', id)
           .single()
 
         if (!categoryData) {
@@ -56,7 +58,7 @@ export default function CategoryPage() {
         const { data: productsData } = await supabase
           .from('products')
           .select('*')
-          .eq('category_id', categoryId)
+          .eq('category_id', id)
           .order('created_at', { ascending: false })
 
         setCategory(categoryData)
@@ -69,8 +71,10 @@ export default function CategoryPage() {
       }
     }
 
-    if (categoryId) {
-      fetchData()
+    if (typeof categoryId === 'string' && categoryId.trim().length > 0) {
+      fetchData(categoryId)
+    } else {
+      router.push('/collections')
     }
   }, [categoryId, router])
 
@@ -83,7 +87,10 @@ export default function CategoryPage() {
         return b.price - a.price
       case 'newest':
       default:
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        return (
+          new Date(b.created_at ?? 0).getTime() -
+          new Date(a.created_at ?? 0).getTime()
+        )
     }
   })
 
@@ -163,7 +170,7 @@ export default function CategoryPage() {
                   {/* Product Image */}
                   <div className={styles.productImage}>
                     <img
-                      src={product.image_url}
+                      src={product.image_url || ''}
                       alt={product.name}
                     />
                     

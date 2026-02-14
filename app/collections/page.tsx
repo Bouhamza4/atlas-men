@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 
 type Category = {
-  id: number
+  id: string
   name: string
   image_url?: string | null
   product_count?: number
@@ -20,11 +20,11 @@ type Product = {
   id: string
   name: string
   price: number
-  image_url: string
-  category_id: number
+  image_url?: string | null
+  category_id?: string | null
   rating?: number
   discount?: number
-  created_at: string
+  created_at?: string | null
 }
 
 export default function CollectionsPage() {
@@ -33,7 +33,7 @@ export default function CollectionsPage() {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<number | 'all'>('all')
+  const [selectedCategory, setSelectedCategory] = useState<string | 'all'>('all')
   const [sortBy, setSortBy] = useState<'newest' | 'price-low' | 'price-high'>('newest')
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -101,7 +101,11 @@ export default function CollectionsPage() {
         break
       case 'newest':
       default:
-        result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        result.sort(
+          (a, b) =>
+            new Date(b.created_at ?? 0).getTime() -
+            new Date(a.created_at ?? 0).getTime()
+        )
     }
 
     setFilteredProducts(result)
@@ -350,7 +354,7 @@ export default function CollectionsPage() {
                       {/* Product Image */}
                       <div className={styles.productImage}>
                         <img
-                          src={product.image_url}
+                          src={product.image_url || ''}
                           alt={product.name}
                         />
                         

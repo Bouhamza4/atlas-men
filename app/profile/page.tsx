@@ -70,8 +70,8 @@ export default function ProfilePage() {
             phone: profile.phone || '',
             address: profile.address || '',
             city: profile.city || '',
-            country: profile.country || 'Morocco',
-            postalCode: profile.postal_code || ''
+            country: 'Morocco',
+            postalCode: ''
           });
         } else {
           // If no profile exists, create one
@@ -173,8 +173,6 @@ export default function ProfilePage() {
           phone: formData.phone,
           address: formData.address,
           city: formData.city,
-          country: formData.country,
-          postal_code: formData.postalCode,
           updated_at: new Date().toISOString()
         });
 
