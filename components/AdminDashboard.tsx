@@ -30,9 +30,24 @@ export default function AdminDashboard() {
     categoriesCount: 0
   })
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+  const [fetchError, setFetchError] = useState<string | null>(null)
+
+  const isAbortError = (err: unknown) => {
+    if (err instanceof DOMException && err.name === 'AbortError') return true
+    if (err && typeof err === 'object') {
+      const anyErr = err as Record<string, unknown>
+      return (
+        anyErr.name === 'AbortError' ||
+        (typeof anyErr.message === 'string' &&
+          anyErr.message.toLowerCase().includes('signal is aborted'))
+      )
+    }
+    return false
+  }
 
   const fetchProducts = async () => {
     setLoading(true)
+    setFetchError(null)
     try {
       const { data: productsData, error } = await supabase
         .from('products')
@@ -64,7 +79,10 @@ export default function AdminDashboard() {
         categoriesCount: new Set(formattedProducts.map(p => p.category_id)).size
       })
     } catch (error) {
-      console.error('Error fetching products:', error)
+      if (!isAbortError(error)) {
+        console.error('Error fetching products:', error)
+        setFetchError('Failed to load products. Check RLS SELECT policy on products.')
+      }
     } finally {
       setLoading(false)
     }
@@ -216,6 +234,12 @@ export default function AdminDashboard() {
 
       {/* Products Table */}
       <div className="products-table-container">
+        {fetchError && (
+          <div className="empty-state">
+            <h3>Could not load admin data</h3>
+            <p>{fetchError}</p>
+          </div>
+        )}
         {loading ? (
           <div className="loading-table">
             <TbLoader className="spinner" />

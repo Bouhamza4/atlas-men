@@ -46,7 +46,15 @@ function ProductsPageClient() {
     const isAbortError = (error: unknown) => {
       if (error instanceof DOMException && error.name === 'AbortError') return true
       if (error instanceof Error) {
-        return error.name === 'AbortError' || error.message.includes('signal is aborted')
+        return error.name === 'AbortError' || error.message.toLowerCase().includes('signal is aborted')
+      }
+      if (error && typeof error === 'object') {
+        const anyErr = error as Record<string, unknown>
+        return (
+          anyErr.name === 'AbortError' ||
+          (typeof anyErr.message === 'string' &&
+            anyErr.message.toLowerCase().includes('signal is aborted'))
+        )
       }
       return false
     }
@@ -60,7 +68,7 @@ function ProductsPageClient() {
           .from('products')
           .select(`
           *,
-          categories!inner (
+          categories (
             name,
             slug
           )
@@ -101,7 +109,11 @@ function ProductsPageClient() {
         }
       } catch (error) {
         if (!isAbortError(error)) {
-          console.error('Failed to fetch products page data:', error)
+          const message =
+            error && typeof error === 'object' && 'message' in error
+              ? String((error as any).message || 'Failed to fetch products page data')
+              : 'Failed to fetch products page data'
+          console.error('Failed to fetch products page data:', message)
         }
       } finally {
         if (isActive) setLoading(false)

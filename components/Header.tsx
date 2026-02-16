@@ -3,9 +3,21 @@
 import Link from 'next/link'
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-import { FiUser, FiShoppingCart, FiMenu, FiX, FiChevronDown, FiSearch, FiLogOut, FiHeart, FiPackage } from 'react-icons/fi'
-import { RiTShirtLine } from 'react-icons/ri'
+import { getCartCount } from '@/lib/cart'
+import { getWishlist } from '@/lib/wishlist'
+import {
+  FiUser,
+  FiShoppingCart,
+  FiMenu,
+  FiX,
+  FiChevronDown,
+  FiSearch,
+  FiLogOut,
+  FiHeart,
+  FiPackage,
+} from 'react-icons/fi'
 import './Header.css'
+import logo from '@/public/lo.png'
 
 export default function Header() {
   const [user, setUser] = useState<any>(null)
@@ -15,49 +27,67 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [allowTransitions, setAllowTransitions] = useState(false)
-  const [cartCount, setCartCount] = useState(3)
-  const [wishlistCount, setWishlistCount] = useState(2)
+  const [cartCount, setCartCount] = useState(0)
+  const [wishlistCount, setWishlistCount] = useState(0)
   const profileRef = useRef<HTMLDivElement>(null)
-  const headerRef = useRef<HTMLDivElement>(null)
 
-  // السماح بالانتقالات بعد التحميل الكامل
+  // Enable transitions after initial paint to avoid flicker.
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setAllowTransitions(true)
-    }, 100)
+    const timer = setTimeout(() => setAllowTransitions(true), 100)
     return () => clearTimeout(timer)
   }, [])
 
-  // حفظ حالة القائمة في localStorage
   useEffect(() => {
-    localStorage.setItem('menuState', JSON.stringify({
-      isMenuOpen,
-      scrolled
-    }))
+    localStorage.setItem(
+      'menuState',
+      JSON.stringify({
+        isMenuOpen,
+        scrolled,
+      })
+    )
   }, [isMenuOpen, scrolled])
 
-  // Check session on mount
   useEffect(() => {
-    const session = supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null)
-    })
+    let isMounted = true
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
+    const refreshCounts = async (userId?: string) => {
+      if (!userId) {
+        if (!isMounted) return
+        setCartCount(0)
+        setWishlistCount(0)
+        return
+      }
+      const [cartResult, wishlistResult] = await Promise.allSettled([
+        getCartCount(userId),
+        getWishlist(userId),
+      ])
 
-    // Handle scroll effect
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50)
+      if (!isMounted) return
+      setCartCount(cartResult.status === 'fulfilled' ? cartResult.value : 0)
+      setWishlistCount(
+        wishlistResult.status === 'fulfilled' ? wishlistResult.value.length : 0
+      )
     }
 
-    // Handle responsive
+    supabase.auth.getSession().then(async ({ data }) => {
+      const authUser = data.session?.user ?? null
+      setUser(authUser)
+      await refreshCounts(authUser?.id)
+    })
+
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const authUser = session?.user ?? null
+      setUser(authUser)
+      await refreshCounts(authUser?.id)
+    })
+
+    const handleScroll = () => setScrolled(window.scrollY > 50)
+
     const handleResize = () => {
       setIsMobile(window.innerWidth < 1024)
       if (window.innerWidth >= 1024) setIsMenuOpen(false)
     }
 
-    // Handle click outside profile dropdown
     const handleClickOutside = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setIsProfileDropdownOpen(false)
@@ -67,10 +97,10 @@ export default function Header() {
     window.addEventListener('scroll', handleScroll)
     window.addEventListener('resize', handleResize)
     document.addEventListener('mousedown', handleClickOutside)
-
-    handleResize() // Initial check
+    handleResize()
 
     return () => {
+      isMounted = false
       listener?.subscription.unsubscribe()
       window.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleResize)
@@ -99,24 +129,12 @@ export default function Header() {
     { label: 'Sale', href: '/products?filter=sale', highlight: true },
     { label: 'Collections', href: '/collections' },
   ]
-  // components/Header.tsx - أضف هذا الـ useEffect
-const [allowAnimations, setAllowAnimations] = useState(false)
-
-// السماح بالـ Animations بعد التحميل الكامل
-useEffect(() => {
-  const timer = setTimeout(() => {
-    setAllowAnimations(true)
-  }, 100)
-  return () => clearTimeout(timer)
-}, [])
-
 
   return (
-    <div ref={headerRef} className="stable-css">
-      {/* Top Bar */}
+    <div className="stable-css">
       <div className="top-bar">
         <div className="container">
-          <span>✨ Free shipping on orders over $100</span>
+          <span>Free shipping on orders over $100</span>
           <div className="top-bar-links">
             <Link href="/contact">Contact Us</Link>
             <Link href="/help">Help Center</Link>
@@ -125,27 +143,24 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* Main Header */}
-      <header className={`main-header ${scrolled ? 'scrolled' : ''} ${isMenuOpen ? 'menu-open' : ''} ${allowTransitions ? 'allow-transitions' : ''}`}>
+      <header
+        className={`main-header ${scrolled ? 'scrolled' : ''} ${isMenuOpen ? 'menu-open' : ''} ${allowTransitions ? 'allow-transitions' : ''}`}
+      >
         <div className="header-container">
-          {/* Logo */}
           <div className="logo-container">
             <Link href="/" className="logo">
-              <RiTShirtLine className="logo-icon" />
               <div className="logo-text">
-                <span className="logo-main">ATLAS</span>
-                <span className="logo-sub">GENTLEMAN</span>
+                <img src={logo.src} alt="Atlas Men" />
               </div>
             </Link>
           </div>
 
-          {/* Navigation */}
           <nav className={`main-nav ${isMenuOpen ? 'open' : ''}`}>
             <ul className="nav-menu">
               {menuItems.map((item) => (
                 <li key={item.label}>
-                  <Link 
-                    href={item.href} 
+                  <Link
+                    href={item.href}
                     className={`nav-link ${item.highlight ? 'highlight' : ''}`}
                     onClick={() => setIsMenuOpen(false)}
                   >
@@ -156,7 +171,6 @@ useEffect(() => {
               ))}
             </ul>
 
-            {/* Search Bar for Mobile */}
             {isMobile && (
               <form onSubmit={handleSearch} className="mobile-search">
                 <input
@@ -166,16 +180,14 @@ useEffect(() => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="search-input"
                 />
-                <button type="submit" className="search-btn">
+                <button type="submit" className="search-btn" aria-label="Search">
                   <FiSearch />
                 </button>
               </form>
             )}
           </nav>
 
-          {/* Right Side Actions */}
           <div className="header-actions">
-            {/* Search (Desktop) */}
             {!isMobile && (
               <form onSubmit={handleSearch} className="search-container">
                 <input
@@ -185,91 +197,65 @@ useEffect(() => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="search-input"
                 />
-                <button type="submit" className="search-btn">
+                <button type="submit" className="search-btn" aria-label="Search">
                   <FiSearch />
                 </button>
               </form>
             )}
 
-            {/* Wishlist */}
-            <Link href="/wishlist" className="action-btn" title="Wishlist">
+            <Link href="/wishlist" className="action-btn" title="Wishlist" aria-label="Wishlist">
               <FiHeart />
-              {wishlistCount > 0 && (
-                <span className="action-badge">{wishlistCount}</span>
-              )}
+              {wishlistCount > 0 && <span className="action-badge">{wishlistCount}</span>}
             </Link>
 
-            {/* Cart */}
-            <Link href="/cart" className="action-btn cart-btn" title="Cart">
+            <Link href="/cart" className="action-btn cart-btn" title="Cart" aria-label="Cart">
               <FiShoppingCart />
-              {cartCount > 0 && (
-                <span className="action-badge">{cartCount}</span>
-              )}
+              {cartCount > 0 && <span className="action-badge">{cartCount}</span>}
             </Link>
 
-            {/* Profile/Auth */}
             <div className="profile-container" ref={profileRef}>
               {user ? (
                 <>
                   <button
                     className="profile-btn"
                     onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                    aria-label="Profile menu"
                   >
                     <FiUser />
-                    <span className="profile-name">
-                      {user.email?.split('@')[0]}
-                    </span>
+                    <span className="profile-name">{user.email?.split('@')[0]}</span>
                     <FiChevronDown className={`chevron ${isProfileDropdownOpen ? 'open' : ''}`} />
                   </button>
 
-                  {/* Profile Dropdown */}
                   {isProfileDropdownOpen && (
                     <div className="profile-dropdown">
                       <div className="dropdown-header">
-                        <div className="user-avatar">
-                          {user.email?.charAt(0).toUpperCase()}
-                        </div>
+                        <div className="user-avatar">{user.email?.charAt(0).toUpperCase()}</div>
                         <div className="user-info">
                           <strong>{user.email}</strong>
                           <span>Welcome back!</span>
                         </div>
                       </div>
-                      
+
                       <div className="dropdown-divider"></div>
-                      
-                      <Link 
-                        href="/profile" 
-                        className="dropdown-item"
-                        onClick={() => setIsProfileDropdownOpen(false)}
-                      >
+
+                      <Link href="/profile" className="dropdown-item" onClick={() => setIsProfileDropdownOpen(false)}>
                         <FiUser />
                         <span>My Profile</span>
                       </Link>
-                      
-                      <Link 
-                        href="/orders" 
-                        className="dropdown-item"
-                        onClick={() => setIsProfileDropdownOpen(false)}
-                      >
+
+                      <Link href="/orders" className="dropdown-item" onClick={() => setIsProfileDropdownOpen(false)}>
                         <FiPackage />
                         <span>My Orders</span>
                       </Link>
-                      
-                      <Link 
-                        href="/wishlist" 
-                        className="dropdown-item"
-                        onClick={() => setIsProfileDropdownOpen(false)}
-                      >
+
+                      <Link href="/wishlist" className="dropdown-item" onClick={() => setIsProfileDropdownOpen(false)}>
                         <FiHeart />
                         <span>Wishlist</span>
                       </Link>
-                      
+
                       <div className="dropdown-divider"></div>
-                      
-                      <button 
-                        onClick={handleLogout}
-                        className="dropdown-item logout"
-                      >
+
+                      <button onClick={handleLogout} className="dropdown-item logout">
                         <FiLogOut />
                         <span>Logout</span>
                       </button>
@@ -289,11 +275,10 @@ useEffect(() => {
               )}
             </div>
 
-            {/* Mobile Menu Toggle */}
-            <button 
-              className="menu-toggle" 
+            <button
+              className="menu-toggle"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+              aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
             >
               {isMenuOpen ? <FiX /> : <FiMenu />}
             </button>

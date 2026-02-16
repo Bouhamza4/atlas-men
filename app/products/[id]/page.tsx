@@ -137,9 +137,11 @@ export default function ProductDetailPage() {
         {/* Right Column - Info */}
         <div className="info-column">
           <ProductInfo 
+            productId={product.id}
             name={product.name}
             price={product.price}
             originalPrice={product.price * 1.3} // Example discount
+            imageUrl={product.image_url}
             description={product.description || "Premium quality product designed for the modern gentleman."}
             category={product.categories?.name || "Clothing"}
             sku={`ATLAS-${product.id.toString().padStart(4, '0')}`}
@@ -148,7 +150,7 @@ export default function ProductDetailPage() {
             reviewCount={128}
             sizes={['XS', 'S', 'M', 'L', 'XL']}
             colors={['#0f172a', '#c9a24d', '#64748b', '#1e293b']}
-            stock={15}
+            stock={Math.max(Number(product.stock || 0), 0)}
           />
         </div>
       </div>

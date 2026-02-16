@@ -1,7 +1,11 @@
 'use client'
 import Link from 'next/link'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 import { FiEye, FiHeart, FiShoppingCart } from 'react-icons/fi'
+import { addToCart } from '@/lib/cart'
+import { toggleWishlist } from '@/lib/wishlist'
 import './ProductCard.css'
 
 interface Product {
@@ -16,6 +20,7 @@ interface Product {
 }
 
 export default function ProductCard({ product }: { product: Product }) {
+  const router = useRouter()
   const [isHovered, setIsHovered] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
 
@@ -26,17 +31,40 @@ export default function ProductCard({ product }: { product: Product }) {
     console.log('Quick view:', product.id)
   }
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    // Implement add to cart
-    console.log('Add to cart:', product.id)
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      router.push('/auth/login?redirect=/products')
+      return
+    }
+
+    const ok = await addToCart(user.id, product.id, 1)
+    if (!ok) {
+      alert('Failed to add item to cart.')
+      return
+    }
+    alert('Added to cart.')
   }
 
-  const handleToggleLike = (e: React.MouseEvent) => {
+  const handleToggleLike = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setIsLiked(!isLiked)
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      router.push('/auth/login?redirect=/products')
+      return
+    }
+
+    const ok = await toggleWishlist(user.id, product.id)
+    if (!ok) {
+      alert('Failed to update wishlist.')
+      return
+    }
+    setIsLiked(prev => !prev)
   }
 
   return (

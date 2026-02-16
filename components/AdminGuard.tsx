@@ -11,6 +11,19 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
   const [error, setError] = useState<string | null>(null)
   const [user, setUser] = useState<any>(null)
 
+  const isAbortError = (err: unknown) => {
+    if (err instanceof DOMException && err.name === 'AbortError') return true
+    if (err && typeof err === 'object') {
+      const anyErr = err as Record<string, unknown>
+      return (
+        anyErr.name === 'AbortError' ||
+        (typeof anyErr.message === 'string' &&
+          anyErr.message.toLowerCase().includes('signal is aborted'))
+      )
+    }
+    return false
+  }
+
   useEffect(() => {
     const checkAdmin = async () => {
       try {
@@ -24,7 +37,7 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
         }
 
         if (!authUser) {
-          router.push('/login?redirect=/admin')
+          router.replace('/auth/login?redirect=/admin')
           return
         }
 
@@ -35,19 +48,28 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
           .from('profiles')
           .select('role, email, full_name')
           .eq('id', authUser.id)
-          .single()
+          .maybeSingle()
 
         if (profileError) {
-          throw new Error('Profile not found')
+          const code = (profileError as any)?.code
+          if (code === '42501') {
+            throw new Error('RLS denied access to profiles. Check SELECT policy for authenticated users.')
+          }
+          throw new Error(profileError.message || 'Profile check failed')
         }
 
         if (profile?.role !== 'admin') {
           setError('Access denied. Admin privileges required.')
+          setLoading(false)
           return
         }
 
         setLoading(false)
       } catch (err: any) {
+        if (isAbortError(err)) {
+          setLoading(false)
+          return
+        }
         setError(err.message || 'An error occurred')
         setLoading(false)
       }
@@ -58,7 +80,7 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
     // Listen for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
-        router.push('/login')
+        router.replace('/auth/login')
       }
     })
 

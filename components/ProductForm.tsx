@@ -13,6 +13,7 @@ interface ProductFormProps {
 
 export default function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) {
   const [loading, setLoading] = useState(false)
+  const [imageUploading, setImageUploading] = useState(false)
   const [categories, setCategories] = useState<any[]>([])
   const [formData, setFormData] = useState({
     name: product?.name || '',
@@ -36,6 +37,10 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
 
+    if (imageUploading) {
+      newErrors.image_url = 'Please wait until image upload is complete'
+    }
+
     if (!formData.name.trim()) {
       newErrors.name = 'Product name is required'
     }
@@ -58,6 +63,26 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
+  }
+
+  const getErrorMessage = (error: unknown): string => {
+    if (error && typeof error === 'object') {
+      const anyError = error as Record<string, unknown>
+      const message = typeof anyError.message === 'string' ? anyError.message : ''
+      const code = typeof anyError.code === 'string' ? anyError.code : ''
+
+      if (message.toLowerCase().includes('row-level security') || code === '42501') {
+        return 'Permission denied by RLS policy. Check Supabase INSERT/UPDATE policy for products.'
+      }
+
+      if (message.toLowerCase().includes('signal is aborted') || anyError.name === 'AbortError') {
+        return 'Request was interrupted. Please try again.'
+      }
+
+      if (message) return message
+    }
+
+    return 'Failed to save product. Please try again.'
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,7 +124,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       onSuccess?.()
     } catch (error: any) {
       console.error('Error saving product:', error)
-      setErrors({ submit: error.message })
+      setErrors({ submit: getErrorMessage(error) })
     } finally {
       setLoading(false)
     }
@@ -132,6 +157,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
           </h3>
           <ImageUploader 
             onUploadComplete={handleImageUpload}
+            onUploadStateChange={setImageUploading}
             folder="products"
             maxSize={5}
             aspectRatio={1}
@@ -139,6 +165,23 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
           {errors.image_url && (
             <p className="error-message">{errors.image_url}</p>
           )}
+          <div className="form-group">
+            <label htmlFor="image_url">Image URL (fallback)</label>
+            <input
+              type="url"
+              id="image_url"
+              value={formData.image_url}
+              onChange={(e) => {
+                const value = e.target.value
+                setFormData(prev => ({ ...prev, image_url: value }))
+                if (value.trim()) {
+                  setErrors(prev => ({ ...prev, image_url: '' }))
+                }
+              }}
+              placeholder="https://example.com/product.jpg"
+              className={errors.image_url ? 'error' : ''}
+            />
+          </div>
         </div>
 
         {/* Basic Info */}
@@ -243,9 +286,11 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
             </button>
           )}
           
-          <button type="submit" className="submit-btn" disabled={loading}>
+          <button type="submit" className="submit-btn" disabled={loading || imageUploading}>
             {loading ? (
               <span className="loading-spinner"></span>
+            ) : imageUploading ? (
+              'Uploading image...'
             ) : (
               <>
                 <FiSave />

@@ -1,11 +1,17 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 import { FiShoppingCart, FiHeart, FiShare2, FiPackage, FiTruck, FiShield, FiStar, FiChevronRight } from 'react-icons/fi'
+import { addToCart } from '@/lib/cart'
+import { toggleWishlist } from '@/lib/wishlist'
 import './ProductInfo.css'
 
 interface ProductInfoProps {
+  productId: string
   name: string
   price: number
+  imageUrl?: string | null
   originalPrice?: number
   description: string
   category: string
@@ -19,8 +25,10 @@ interface ProductInfoProps {
 }
 
 export default function ProductInfo({ 
+  productId,
   name, 
   price, 
+  imageUrl,
   originalPrice,
   description, 
   category,
@@ -32,28 +40,31 @@ export default function ProductInfo({
   colors = ['#0f172a', '#c9a24d', '#64748b', '#ef4444'],
   stock 
 }: ProductInfoProps) {
+  const router = useRouter()
   const [selectedSize, setSelectedSize] = useState<string>('M')
   const [selectedColor, setSelectedColor] = useState<string>('#0f172a')
   const [quantity, setQuantity] = useState(1)
   const [isLiked, setIsLiked] = useState(false)
   const [activeTab, setActiveTab] = useState<'description' | 'details' | 'reviews'>('description')
 
-  const handleAddToCart = () => {
-    const cartItem = {
-      name,
-      price,
-      size: selectedSize,
-      color: selectedColor,
-      quantity,
-      image: 'product-image-url'
+  const handleAddToCart = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      router.push(`/auth/login?redirect=${encodeURIComponent(window.location.pathname)}`)
+      return
     }
-    console.log('Added to cart:', cartItem)
-    // Implement your cart logic here
+
+    const ok = await addToCart(user.id, productId, quantity)
+    if (!ok) {
+      alert('Failed to add item to cart.')
+      return
+    }
+    alert('Added to cart.')
   }
 
-  const handleBuyNow = () => {
-    handleAddToCart()
-    // Redirect to checkout
+  const handleBuyNow = async () => {
+    await handleAddToCart()
+    router.push('/checkout')
   }
 
   const handleShare = () => {
@@ -64,6 +75,21 @@ export default function ProductInfo({
         url: window.location.href,
       })
     }
+  }
+
+  const handleWishlist = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      router.push(`/auth/login?redirect=${encodeURIComponent(window.location.pathname)}`)
+      return
+    }
+
+    const ok = await toggleWishlist(user.id, productId)
+    if (!ok) {
+      alert('Failed to update wishlist.')
+      return
+    }
+    setIsLiked(prev => !prev)
   }
 
   const renderStars = (rating: number) => {
@@ -215,7 +241,7 @@ export default function ProductInfo({
         <div className="secondary-actions">
           <button 
             className={`action-icon like-btn ${isLiked ? 'liked' : ''}`}
-            onClick={() => setIsLiked(!isLiked)}
+            onClick={handleWishlist}
             aria-label={isLiked ? "Remove from wishlist" : "Add to wishlist"}
           >
             <FiHeart />
